@@ -1022,110 +1022,12 @@
 
           <div class="separator"></div>
 
-          <div class="manual-check">
-            <div class="check-section-title">운영자 판단 영역 (합성 품질 감시)</div>
-            <div class="checkbox-group">
-              <label class="checkbox-item">
-                <input type="checkbox" id="inf_axes_conflict" onchange="calculateInfinityScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">심사축 간 결론 충돌 존재</span>
-                  <span class="checkbox-hint">6대 심사축 결론이 서로 모순</span>
-                </div>
-              </label>
-
-              <label class="checkbox-item">
-                <input type="checkbox" id="inf_verdict_mismatch" onchange="calculateInfinityScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">FINAL VERDICT와 심사축 결론 불일치</span>
-                  <span class="checkbox-hint">판정 결과가 심사 내용과 안 맞음</span>
-                </div>
-              </label>
-
-              <label class="checkbox-item">
-                <input type="checkbox" id="inf_slot_missing" onchange="calculateInfinityScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">Slot A/B 영향 범위 누락 또는 과장</span>
-                  <span class="checkbox-hint">영향 추적이 불완전하거나 부풀림</span>
-                </div>
-              </label>
-
-              <label class="checkbox-item">
-                <input type="checkbox" id="inf_change_no_basis" onchange="calculateInfinityScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">제거/축소 내역의 근거 불명확</span>
-                  <span class="checkbox-hint">왜 제거/축소했는지 이유 없음</span>
-                </div>
-              </label>
-
-              <label class="checkbox-item">
-                <input type="checkbox" id="inf_sealing_vague" onchange="calculateInfinityScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">Sealing 영역 분류 기준 모호</span>
-                  <span class="checkbox-hint">동결/실험/변경 기준이 불명확</span>
-                </div>
-              </label>
-
-              <label class="checkbox-item">
-                <input type="checkbox" id="inf_responsibility_missing" onchange="calculateInfinityScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">합성 책임 경계 태그 누락</span>
-                  <span class="checkbox-hint">책임 소재 구분 없음</span>
-                </div>
-              </label>
-
-              <label class="checkbox-item">
-                <input type="checkbox" id="inf_step2_mismatch" onchange="calculateInfinityScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">STEP 2 반영 항목과 실제 반영 불일치</span>
-                  <span class="checkbox-hint">반영했다고 했는데 실제로 안 됨</span>
-                </div>
-              </label>
-
-              <label class="checkbox-item">
-                <input type="checkbox" id="inf_operator_weak" onchange="calculateInfinityScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">운영자 관점 적합성 검토 부실</span>
-                  <span class="checkbox-hint">운영자가 실제로 쓸 수 있는지 미검증</span>
-                </div>
-              </label>
-
-              <label class="checkbox-item">
-                <input type="checkbox" id="inf_stress_shallow" onchange="calculateInfinityScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">최악 시나리오 깊이 부족</span>
-                  <span class="checkbox-hint">스트레스 테스트가 피상적</span>
-                </div>
-              </label>
-
-              <label class="checkbox-item">
-                <input type="checkbox" id="inf_no_employee_fail" onchange="calculateInfinityScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">No-Employee Operation 위반 구간 존재</span>
-                  <span class="checkbox-hint">직원 필요 구간이 설계에 포함</span>
-                </div>
-              </label>
-
-              <label class="checkbox-item">
-                <input type="checkbox" id="inf_risk_no_response" onchange="calculateInfinityScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">리스크가 명시되었으나 대응 없음</span>
-                  <span class="checkbox-hint">위험 감지만 하고 해결책 없음</span>
-                </div>
-              </label>
-
-              <label class="checkbox-item">
-                <input type="checkbox" id="inf_prebuilt_broken" onchange="calculateInfinityScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">Pre-built 반복판매 구조 훼손</span>
-                  <span class="checkbox-hint">커스텀 과다로 반복판매 불가</span>
-                </div>
-              </label>
-            </div>
-
+          <div style="margin-top: 24px;">
+            <div class="check-section-title">Minimal Gate 판정</div>
             <div class="score-display" id="infinityScoreDisplay">
               <div>
-                <div class="score-label">이탈 감지 점수</div>
-                <div class="score-value" id="infinityScoreValue">0 / 12</div>
+                <div class="score-label">Gate 통과</div>
+                <div class="score-value" id="infinityScoreValue">- / 5</div>
               </div>
               <div class="score-verdict rework" id="infinityVerdict">대기</div>
             </div>
@@ -1135,49 +1037,49 @@
 
       document.getElementById('infinityResult').innerHTML = html;
       
-      // 초기 판정 계산
+      // Minimal Gate 판정 계산
       calculateInfinityScore();
     }
 
     function calculateInfinityScore() {
-      const ids = [
-        'inf_axes_conflict', 'inf_verdict_mismatch', 'inf_slot_missing', 'inf_change_no_basis',
-        'inf_sealing_vague', 'inf_responsibility_missing', 'inf_step2_mismatch', 'inf_operator_weak',
-        'inf_stress_shallow', 'inf_no_employee_fail', 'inf_risk_no_response', 'inf_prebuilt_broken'
-      ];
+      const autoChecks = currentInfinityResult?.autoChecks;
+      if(!autoChecks) return;
+
+      // 5개 Gate 조건
+      const gates = {
+        parts: autoChecks.partsOk,
+        axes: autoChecks.axesOk,
+        verdict: autoChecks.verdictOk,
+        impact: autoChecks.impactCount >= 1,
+        sealing: autoChecks.sealingCount >= 1
+      };
+
+      const passed = Object.values(gates).filter(Boolean).length;
       
-      const checked = ids.filter(id => document.getElementById(id)?.checked).length;
-      
-      document.getElementById('infinityScoreValue').textContent = `${checked} / 12`;
+      document.getElementById('infinityScoreValue').textContent = `${passed} / 5`;
       
       const verdictEl = document.getElementById('infinityVerdict');
       let verdict = '';
       
-      // 구조 검사 실패 시 PASS 차단
-      const structurePass = currentInfinityResult?.autoChecks?.structurePass ?? false;
-      
-      if(!structurePass) {
-        // 구조 실패 → 최소 REWORK
-        verdict = checked >= 3 ? 'DROP' : 'REWORK';
-        verdictEl.className = verdict === 'DROP' ? 'score-verdict drop' : 'score-verdict rework';
+      // Minimal Gate Logic
+      // DROP: PART 구조 누락 또는 FINAL VERDICT 미존재
+      // PASS: 5개 전부 OK
+      // REWORK: 나머지
+      if(!gates.parts || !gates.verdict) {
+        verdict = 'DROP';
+        verdictEl.className = 'score-verdict drop';
+      } else if(passed === 5) {
+        verdict = 'PASS';
+        verdictEl.className = 'score-verdict pass';
       } else {
-        // 구조 통과 → 수동 체크 기준
-        if(checked === 0) {
-          verdict = 'PASS';
-          verdictEl.className = 'score-verdict pass';
-        } else if(checked <= 2) {
-          verdict = 'REWORK';
-          verdictEl.className = 'score-verdict rework';
-        } else {
-          verdict = 'DROP';
-          verdictEl.className = 'score-verdict drop';
-        }
+        verdict = 'REWORK';
+        verdictEl.className = 'score-verdict rework';
       }
       
       verdictEl.textContent = verdict;
       
       if(currentInfinityResult) {
-        currentInfinityResult.manualScore = checked;
+        currentInfinityResult.manualScore = 0;
         currentInfinityResult.verdict = verdict;
       }
       
@@ -1373,7 +1275,7 @@
       const infinity = currentInfinityResult ? currentInfinityResult.verdict : '-';
       const preview = currentPreviewResult ? currentPreviewResult.verdict : '-';
       const memo = [
-        currentInfinityResult ? `Inf: ${currentInfinityResult.manualScore}/12` : '',
+        currentInfinityResult ? `Inf: ${currentInfinityResult.verdict}` : '',
         currentPreviewResult ? `Prev: ${currentPreviewResult.manualScore}/3` : ''
       ].filter(Boolean).join(' | ') || '-';
       
