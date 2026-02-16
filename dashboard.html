@@ -1114,7 +1114,7 @@
     function performPreviewChecks(text) {
       const checks = {
         sections: {
-          global: /Global\s*Status/i.test(text) || /global/i.test(text),
+          global: /Global\s*Status/i.test(text) || /global/i.test(text) || text.includes('"status"'),
           oneThings: /One\s*Thing/i.test(text) || /one_thing/i.test(text),
           signals: /Signal/i.test(text) || /signals/i.test(text),
           logs: /History/i.test(text) || /logs/i.test(text),
