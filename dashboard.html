@@ -1179,38 +1179,12 @@
 
           <div class="separator"></div>
 
-          <div class="manual-check">
-            <div class="check-section-title">운영자 판단 영역</div>
-            <div class="checkbox-group">
-              <label class="checkbox-item">
-                <input type="checkbox" id="prev_section_missing" onchange="calculatePreviewScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">필수 섹션 누락</span>
-                  <span class="checkbox-hint">5개 섹션 중 일부 없음</span>
-                </div>
-              </label>
-
-              <label class="checkbox-item">
-                <input type="checkbox" id="prev_field_mismatch" onchange="calculatePreviewScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">필드명 불일치</span>
-                  <span class="checkbox-hint">표준 필드명 이탈</span>
-                </div>
-              </label>
-
-              <label class="checkbox-item">
-                <input type="checkbox" id="prev_invalid_codes" onchange="calculatePreviewScore()" />
-                <div class="checkbox-content">
-                  <span class="checkbox-label">금지 상태 코드 사용</span>
-                  <span class="checkbox-hint">Error/Fail 등 사용</span>
-                </div>
-              </label>
-            </div>
-
+          <div style="margin-top: 24px;">
+            <div class="check-section-title">Preview 판정</div>
             <div class="score-display" id="previewScoreDisplay">
               <div>
-                <div class="score-label">이탈 감지 점수</div>
-                <div class="score-value" id="previewScoreValue">0 / 3</div>
+                <div class="score-label">자동 검사</div>
+                <div class="score-value" id="previewScoreValue">- / 3</div>
               </div>
               <div class="score-verdict rework" id="previewVerdict">대기</div>
             </div>
@@ -1220,47 +1194,46 @@
 
       document.getElementById('previewResult').innerHTML = html;
       
-      // 초기 판정 계산
+      // 자동 판정 계산
       calculatePreviewScore();
     }
 
     function calculatePreviewScore() {
-      const ids = ['prev_section_missing', 'prev_field_mismatch', 'prev_invalid_codes'];
-      const checked = ids.filter(id => document.getElementById(id)?.checked).length;
-      
-      document.getElementById('previewScoreValue').textContent = `${checked} / 3`;
-      
+      const autoChecks = currentPreviewResult?.autoChecks;
+      if(!autoChecks) return;
+
+      // 3개 Gate: 섹션 + 필드 + 상태코드
+      const gates = {
+        sections: autoChecks.sectionsOk,
+        fields: autoChecks.fieldsOk,
+        codes: autoChecks.codesOk
+      };
+
+      const passed = Object.values(gates).filter(Boolean).length;
+
+      document.getElementById('previewScoreValue').textContent = `${passed} / 3`;
+
       const verdictEl = document.getElementById('previewVerdict');
       let verdict = '';
-      
-      // 구조 검사 실패 시 PASS 차단
-      const structurePass = currentPreviewResult?.autoChecks?.structurePass ?? false;
-      
-      if(!structurePass) {
-        // 구조 실패 → 무조건 REWORK
+
+      if(passed === 3) {
+        verdict = 'PASS';
+        verdictEl.className = 'score-verdict pass';
+      } else {
         verdict = 'REWORK';
         verdictEl.className = 'score-verdict rework';
-      } else {
-        // 구조 통과 → 수동 체크 기준
-        if(checked === 0) {
-          verdict = 'PASS';
-          verdictEl.className = 'score-verdict pass';
-        } else {
-          verdict = 'REWORK';
-          verdictEl.className = 'score-verdict rework';
-        }
       }
-      
+
       verdictEl.textContent = verdict;
-      
+
       if(currentPreviewResult) {
-        currentPreviewResult.manualScore = checked;
+        currentPreviewResult.manualScore = 0;
         currentPreviewResult.verdict = verdict;
       }
-      
+
       document.getElementById('sidebarPreview').textContent = verdict;
       document.getElementById('sidebarPreview').className = `status-value ${verdict.toLowerCase()}`;
-      
+
       saveToLocalStorage();
     }
 
@@ -1276,7 +1249,7 @@
       const preview = currentPreviewResult ? currentPreviewResult.verdict : '-';
       const memo = [
         currentInfinityResult ? `Inf: ${currentInfinityResult.verdict}` : '',
-        currentPreviewResult ? `Prev: ${currentPreviewResult.manualScore}/3` : ''
+        currentPreviewResult ? `Prev: ${currentPreviewResult.verdict}` : ''
       ].filter(Boolean).join(' | ') || '-';
       
       const log = {
