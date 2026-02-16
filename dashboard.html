@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Launchrail 검수대 — STEP 3 무결성 감시</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+      background: #f8f9fb;
+      color: #2c3e50;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: #ffffff;
+      border-right: 1px solid #e8eaed;
+      padding: 28px 20px;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #1a202c;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: #a8b5ff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-card {
+      padding: 12px;
+      background: #f8f9fb;
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+
+    .status-label {
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+
+    .status-value {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .status-value.pass { color: #16a34a; }
+    .status-value.rework { color: #d97706; }
+    .status-value.drop { color: #dc2626; }
+    .status-value.pending { color: #64748b; }
+
+    /* Main */
+    .main {
+      flex: 1;
+      padding: 40px 48px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+      overflow-y: auto;
+    }
+
+    .header {
+      margin-bottom: 36px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #1a202c;
+    }
+
+    .header .subtitle {
+      font-size: 15px;
+      color: #64748b;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 11px 18px;
+      border-radius: 11px;
+      border: 1px solid #e0e4e8;
+      background: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: #475569;
+    }
+
+    .btn:hover {
+      background: #f8f9fb;
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: #6366f1;
+      color: white;
+      border-color: #6366f1;
+    }
+
+    .btn-primary:hover {
+      background: #4f46e5;
+      border-color: #4f46e5;
+    }
+
+    .btn-inspect {
+      background: linear-gradient(135deg, #a8b5ff 0%, #c8b6ff 100%);
+      color: #1a202c;
+      border: none;
+      font-weight: 600;
+      padding: 14px 24px;
+      font-size: 15px;
+    }
+
+    .btn-inspect:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(168, 181, 255, 0.3);
+    }
+
+    /* Section */
+    .section {
+      background: white;
+      padding: 32px;
+      border-radius: 18px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      border: 1px solid #e8eaed;
+      margin-bottom: 24px;
+    }
+
+    .section-header {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #1a202c;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-icon {
+      width: 36px;
+      height: 36px;
+      background: #eef2ff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    /* Input Area */
+    .input-area {
+      margin-bottom: 20px;
+    }
+
+    .input-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #e0e4e8;
+      border-radius: 11px;
+      font-size: 14px;
+      background: #fafbfc;
+      transition: all 0.2s;
+      font-family: inherit;
+      color: #2c3e50;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+    }
+
+    textarea {
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .design-input {
+      min-height: 300px;
+    }
+
+    .output-input {
+      min-height: 250px;
+    }
+
+    /* Auto Check Result */
+    .auto-check-result {
+      margin-top: 24px;
+      padding: 24px;
+      background: #f8f9fb;
+      border-radius: 14px;
+      border: 1px solid #e8eaed;
+    }
+
+    .check-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e8eaed;
+    }
+
+    .check-list {
+      list-style: none;
+      margin-bottom: 20px;
+    }
+
+    .check-item {
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .check-icon {
+      font-size: 16px;
+    }
+
+    .check-icon.ok { color: #16a34a; }
+    .check-icon.warning { color: #d97706; }
+    .check-icon.error { color: #dc2626; }
+
+    .separator {
+      height: 2px;
+      background: linear-gradient(90deg, #e8eaed 0%, #e8eaed 50%, transparent 50%, transparent 100%);
+      background-size: 20px 2px;
+      margin: 20px 0;
+    }
+
+    /* Manual Check */
+    .manual-check {
+      margin-top: 24px;
+    }
+
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      gap: 14px;
+      padding: 16px;
+      border: 1px solid #e8eaed;
+      border-radius: 13px;
+      background: #fafbfc;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .checkbox-item:hover {
+      background: white;
+      border-color: #cbd5e1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      margin-top: 3px;
+      width: 19px;
+      height: 19px;
+      cursor: pointer;
+      accent-color: #dc2626;
+    }
+
+    .checkbox-content {
+      flex: 1;
+    }
+
+    .checkbox-label {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 5px;
+      display: block;
+      color: #2c3e50;
+    }
+
+    .checkbox-hint {
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    /* Score Display */
+    .score-display {
+      margin-top: 20px;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 4px solid #a8b5ff;
+    }
+
+    .score-label {
+      font-size: 14px;
+      color: #64748b;
+    }
+
+    .score-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .score-verdict {
+      font-size: 18px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 8px;
+    }
+
+    .score-verdict.pass {
+      background: #d1f4e0;
+      color: #16a34a;
+    }
+
+    .score-verdict.rework {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .score-verdict.drop {
+      background: #fecdd3;
+      color: #dc2626;
+    }
+
+    /* Log Table */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+      border: 1px solid #e8eaed;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th {
+      background: #f8f9fb;
+      padding: 12px 14px;
+      text-align: left;
+      font-weight: 600;
+      color: #475569;
+      border-bottom: 1px solid #e8eaed;
+    }
+
+    td {
+      padding: 14px;
+      border-bottom: 1px solid #f1f3f5;
+      background: white;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: #1a202c;
+      color: white;
+      padding: 16px 22px;
+      border-radius: 13px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+      display: none;
+      align-items: center;
+      gap: 12px;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .toast.show {
+      display: flex;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(100px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">LR</div>
+      Launchrail
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">현재 상태</div>
+      <div class="status-card">
+        <div class="status-label">Infinity</div>
+        <div class="status-value pending" id="sidebarInfinity">대기</div>
+      </div>
+      <div class="status-card">
+        <div class="status-label">Preview</div>
+        <div class="status-value pending" id="sidebarPreview">대기</div>
+      </div>
+      <div class="status-card">
+        <div class="status-label">Pre-build</div>
+        <div class="status-value pending" id="sidebarPrebuild">__ / 3</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">작업 정보</div>
+      <div style="font-size: 12px; color: #64748b; line-height: 1.6;">
+        <div style="margin-bottom: 8px;">
+          <strong>작업 ID:</strong><br>
+          <span id="sidebarWorkId">-</span>
+        </div>
+        <div>
+          <strong>설계 타입:</strong><br>
+          <span id="sidebarDesignType">-</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="header">
+      <h1>Launchrail 검수대</h1>
+      <p class="subtitle">
+        STEP 3 합성 보고서 무결성 감시 · 자동 형식 검사 + 수동 판단 · 오늘: <strong id="todayDisplay">-</strong>
+      </p>
+
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="newInspection()">📝 새 검수</button>
+        <button class="btn" onclick="exportJSON()">📤 JSON 저장</button>
+        <button class="btn" onclick="importJSON()">📥 JSON 불러오기</button>
+      </div>
+    </div>
+
+    <!-- 기본 정보 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon">📋</div>
+        기본 정보
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+        <div class="input-area">
+          <label class="input-label">작업 ID</label>
+          <input type="text" id="workId" placeholder="LR-2026-02-13-01" oninput="updateSidebar()" />
+        </div>
+
+        <div class="input-area">
+          <label class="input-label">설계 타입</label>
+          <input type="text" id="designType" placeholder="No-show prevention" oninput="updateSidebar()" />
+        </div>
+
+        <div class="input-area">
+          <label class="input-label">반복 횟수</label>
+          <input type="text" id="repeatCount" placeholder="1, 2, 3..." oninput="updateSidebar()" />
+        </div>
+
+        <div class="input-area">
+          <label class="input-label">커스텀 레벨</label>
+          <input type="text" id="customLevel" placeholder="LOW / HIGH" oninput="updateSidebar()" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Infinity 검수 -->
+    <div class="section" id="infinitySection">
+      <div class="section-header">
+        <div class="section-icon">🔍</div>
+        Infinity 검수 (STEP 3 합성 보고서 무결성)
+      </div>
+
+      <div class="input-area">
+        <label class="input-label">완성된 STEP 3 합성 보고서 붙여넣기</label>
+        <textarea id="infinityDesign" class="design-input" placeholder="STEP 3 합성 보고서 전체를 여기에 붙여넣으세요...
+
+반드시 포함되어야 하는 구조:
+- PART 0: Mandatory Injection Block
+- PART 1: 6대 심사축 (JJO 무결성, No-Employee, Pre-built, 리스크, 운영자 적합성, 스트레스 테스트)
+- PART 2: 영향 추적 (Slot A/B 영향, 제거/축소/강화 내역)
+- PART 3: FINAL VERDICT (PASS/REWORK/CUSTOM-ONLY/DROP 중 1개)
+- PART 4: Sealing 영역 (동결/실험/변경 불가 등)"></textarea>
+      </div>
+
+      <button class="btn btn-inspect" onclick="inspectInfinity()" id="infinityInspectBtn">
+        🔍 Infinity 검수 시작
+      </button>
+
+      <div id="infinityResult" class="hidden"></div>
+    </div>
+
+    <!-- Preview 검수 -->
+    <div class="section" id="previewSection">
+      <div class="section-header">
+        <div class="section-icon">🖥️</div>
+        Preview 검수 (출력 동결)
+      </div>
+
+      <div class="input-area">
+        <label class="input-label">생성된 Preview 결과물 붙여넣기</label>
+        <textarea id="previewOutput" class="output-input" placeholder="생성된 Preview HTML 또는 JSON을 붙여넣으세요..."></textarea>
+      </div>
+
+      <button class="btn btn-inspect" onclick="inspectPreview()" id="previewInspectBtn">
+        🔍 Preview 검수 시작
+      </button>
+
+      <div id="previewResult" class="hidden"></div>
+    </div>
+
+    <!-- 검수 기록 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon">📊</div>
+        검수 기록
+      </div>
+
+      <table id="logTable">
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>작업 ID</th>
+            <th>설계 타입</th>
+            <th>Infinity</th>
+            <th>Preview</th>
+            <th>메모</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <button class="btn" onclick="addToLog()" style="margin-top: 16px;">
+        📌 현재 검수 기록 추가
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = 'launchrail_inspection_logs';
+    const CURRENT_KEY = 'launchrail_current_work';
+    
+    let currentInfinityResult = null;
+    let currentPreviewResult = null;
+    let inspectionLogs = [];
+
+    function isoToday() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function saveToLocalStorage() {
+      const currentWork = {
+        workId: document.getElementById('workId').value,
+        designType: document.getElementById('designType').value,
+        repeatCount: document.getElementById('repeatCount').value,
+        customLevel: document.getElementById('customLevel').value,
+        infinityDesign: document.getElementById('infinityDesign').value,
+        previewOutput: document.getElementById('previewOutput').value,
+        infinityResult: currentInfinityResult,
+        previewResult: currentPreviewResult,
+        lastSaved: new Date().toISOString()
+      };
+      
+      localStorage.setItem(CURRENT_KEY, JSON.stringify(currentWork));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(inspectionLogs));
+    }
+
+    function loadFromLocalStorage() {
+      const savedLogs = localStorage.getItem(STORAGE_KEY);
+      if(savedLogs) {
+        inspectionLogs = JSON.parse(savedLogs);
+        renderLogs();
+      }
+      
+      const savedWork = localStorage.getItem(CURRENT_KEY);
+      if(savedWork) {
+        const data = JSON.parse(savedWork);
+        document.getElementById('workId').value = data.workId || '';
+        document.getElementById('designType').value = data.designType || '';
+        document.getElementById('repeatCount').value = data.repeatCount || '';
+        document.getElementById('customLevel').value = data.customLevel || '';
+        document.getElementById('infinityDesign').value = data.infinityDesign || '';
+        document.getElementById('previewOutput').value = data.previewOutput || '';
+        
+        if(data.infinityResult) {
+          currentInfinityResult = data.infinityResult;
+          // 저장된 설계가 있으면 재검수 표시
+          if(data.infinityDesign) {
+            const autoChecks = performAutoChecks(data.infinityDesign);
+            const hints = getKeywordHints(data.infinityDesign);
+            displayInfinityInspection(autoChecks, hints);
+          }
+          document.getElementById('infinityResult').classList.remove('hidden');
+        }
+        
+        if(data.previewResult) {
+          currentPreviewResult = data.previewResult;
+          if(data.previewOutput) {
+            const autoChecks = performPreviewChecks(data.previewOutput);
+            displayPreviewInspection(autoChecks);
+          }
+          document.getElementById('previewResult').classList.remove('hidden');
+        }
+        
+        updateSidebar();
+      }
+    }
+
+    function renderLogs() {
+      const tbody = document.querySelector('#logTable tbody');
+      tbody.innerHTML = '';
+      
+      inspectionLogs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${log.date}</td>
+          <td>${log.workId}</td>
+          <td>${log.designType}</td>
+          <td>${log.infinity}</td>
+          <td>${log.preview}</td>
+          <td>${log.memo}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateSidebar() {
+      document.getElementById('sidebarWorkId').textContent = 
+        document.getElementById('workId').value || '-';
+      document.getElementById('sidebarDesignType').textContent = 
+        document.getElementById('designType').value || '-';
+      
+      const repeat = document.getElementById('repeatCount').value;
+      const custom = document.getElementById('customLevel').value.toUpperCase();
+      if(repeat && custom === 'LOW' && Number(repeat) >= 3) {
+        document.getElementById('sidebarPrebuild').textContent = 'READY';
+        document.getElementById('sidebarPrebuild').className = 'status-value pass';
+      } else {
+        document.getElementById('sidebarPrebuild').textContent = `${repeat || '__'} / 3`;
+        document.getElementById('sidebarPrebuild').className = 'status-value pending';
+      }
+      
+      saveToLocalStorage();
+    }
+
+    function newInspection() {
+      document.getElementById('workId').value = `LR-${isoToday()}-01`;
+      document.getElementById('designType').value = '';
+      document.getElementById('repeatCount').value = '';
+      document.getElementById('customLevel').value = '';
+      document.getElementById('infinityDesign').value = '';
+      document.getElementById('previewOutput').value = '';
+      
+      document.getElementById('infinityResult').innerHTML = '';
+      document.getElementById('infinityResult').classList.add('hidden');
+      document.getElementById('previewResult').innerHTML = '';
+      document.getElementById('previewResult').classList.add('hidden');
+      
+      currentInfinityResult = null;
+      currentPreviewResult = null;
+      
+      updateSidebar();
+      showToast('📝 새 검수 시작');
+    }
+
+    function inspectInfinity() {
+      const design = document.getElementById('infinityDesign').value.trim();
+      if(!design) {
+        showToast('❌ 설계도를 입력하세요');
+        return;
+      }
+
+      const resultDiv = document.getElementById('infinityResult');
+      resultDiv.classList.remove('hidden');
+      
+      // 자동 형식 검사
+      const autoChecks = performAutoChecks(design);
+      
+      // 키워드 힌트
+      const hints = getKeywordHints(design);
+      
+      // 결과 표시
+      displayInfinityInspection(autoChecks, hints);
+      
+      currentInfinityResult = {
+        autoChecks,
+        hints,
+        manualScore: 0,
+        verdict: 'PENDING'
+      };
+      
+      saveToLocalStorage();
+    }
+
+    function performAutoChecks(text) {
+      // === 1. PART 0~4 구조 검사 (헤더 기준, 오타 변형 허용) ===
+      const partPatterns = {
+        part0: /\[?\s*PART\s*0\s*\]?\s*[.:：\-]?/i,
+        part1: /\[?\s*PART\s*1\s*\]?\s*[.:：\-]?/i,
+        part2: /\[?\s*PART\s*2\s*\]?\s*[.:：\-]?/i,
+        part3: /\[?\s*PART\s*3\s*\]?\s*[.:：\-]?/i,
+        part4: /\[?\s*PART\s*4\s*\]?\s*[.:：\-]?/i
+      };
+
+      const checks = {
+        parts: {},
+        part0IsMandatory: false,
+        sixAxes: {},
+        finalVerdict: { found: false, value: null, count: 0 },
+        impactTracking: {},
+        sealing: {}
+      };
+
+      // PART 정규식 검사
+      for(const [key, pattern] of Object.entries(partPatterns)) {
+        checks.parts[key] = pattern.test(text);
+      }
+
+      // PART 0 Mandatory Injection Block 확인
+      checks.part0IsMandatory = /Mandatory\s*Injection/i.test(text);
+
+      // === 2. 6대 심사축 존재 검사 (PART 1 내부) ===
+      const axesPatterns = {
+        jjoIntegrity: /JJO\s*(7.?Layer|7\s*레이어|무결성)/i,
+        noEmployee: /No.?Employee/i,
+        prebuilt: /Pre.?built|반복\s*판매/i,
+        risk: /리스크\s*구조|리스크\s*분석|Risk\s*Structure/i,
+        operatorFit: /운영자\s*관점|운영자\s*적합/i,
+        stressTest: /최악\s*시나리오|스트레스\s*테스트|Stress\s*Test/i
+      };
+
+      for(const [key, pattern] of Object.entries(axesPatterns)) {
+        checks.sixAxes[key] = pattern.test(text);
+      }
+
+      // === 3. FINAL VERDICT 검사 (정확히 1개만) ===
+      const verdictPattern = /FINAL\s*VERDICT\s*[.:：\-]?\s*(PASS|REWORK|CUSTOM[\s\-]*ONLY|DROP)/gi;
+      const verdictMatches = [...text.matchAll(verdictPattern)];
+      checks.finalVerdict.count = verdictMatches.length;
+      if(verdictMatches.length === 1) {
+        checks.finalVerdict.found = true;
+        checks.finalVerdict.value = verdictMatches[0][1].toUpperCase();
+      }
+
+      // === 4. 영향 추적 블록 존재 검사 ===
+      const impactPatterns = {
+        step2Reflect: /STEP\s*2\s*반영/i,
+        slotA: /Slot\s*A\s*영향/i,
+        slotB: /Slot\s*B\s*영향/i,
+        changeLog: /제거|축소|강화/i,
+        responsibilityTag: /합성\s*책임\s*경계|책임\s*경계\s*태그/i
+      };
+
+      for(const [key, pattern] of Object.entries(impactPatterns)) {
+        checks.impactTracking[key] = pattern.test(text);
+      }
+
+      // === 5. Sealing 영역 검사 (PART 4 내부) ===
+      const sealingPatterns = {
+        v1Frozen: /v1\.?0\s*동결/i,
+        v1xExperiment: /v1\.?x\s*실험/i,
+        v2Only: /v2\.?0.*(변경|가능)/i,
+        immutable: /변경\s*불가/i,
+        conditional: /조건부\s*변경/i,
+        approvalRequired: /승인\s*필수/i
+      };
+
+      for(const [key, pattern] of Object.entries(sealingPatterns)) {
+        checks.sealing[key] = pattern.test(text);
+      }
+
+      // === 카운트 집계 ===
+      const partCount = Object.values(checks.parts).filter(Boolean).length;
+      const axesCount = Object.values(checks.sixAxes).filter(Boolean).length;
+      const impactCount = Object.values(checks.impactTracking).filter(Boolean).length;
+      const sealingCount = Object.values(checks.sealing).filter(Boolean).length;
+
+      // === 구조 PASS 판정 ===
+      // 엄격: PART 0~4 전부 + FINAL VERDICT 정확히 1개
+      // 느슨: 6대 심사축 4개 이상, 영향추적/Sealing은 경고만
+      const partsOk = partCount === 5;
+      const verdictOk = checks.finalVerdict.count === 1;
+      const axesOk = axesCount >= 4;
+
+      return {
+        checks,
+        partCount,
+        axesCount,
+        impactCount,
+        sealingCount,
+        partsOk,
+        verdictOk,
+        axesOk,
+        structurePass: partsOk && verdictOk && axesOk
+      };
+    }
+
+    function getKeywordHints(text) {
+      const keywords = {
+        branch: ['if', '이면', '조건', 'case', '분기'],
+        prohibition: ['하지 않는다', '금지', '불가', '안 된다'],
+        boundary: ['운영자', '승인', '인간', '검토', '인계'],
+        sealing: ['동결', '봉인', '고정', '불가', 'frozen'],
+        risk: ['위험', '리스크', 'risk', '최악', '스트레스']
+      };
+      
+      const counts = {};
+      for(const [key, words] of Object.entries(keywords)) {
+        counts[key] = words.filter(w => text.toLowerCase().includes(w.toLowerCase())).length;
+      }
+      
+      return counts;
+    }
+
+    function displayInfinityInspection(autoChecks, hints) {
+      const structureWarning = !autoChecks.structurePass ? `
+        <div style="padding: 16px; background: #fef2f2; border-left: 4px solid #dc2626; border-radius: 8px; margin-bottom: 16px;">
+          <strong style="color: #dc2626;">⚠️ 구조 무결성 실패</strong><br>
+          <span style="font-size: 13px; color: #991b1b;">PART/심사축/VERDICT 구조가 완전하지 않아 PASS 불가능합니다. 최소 REWORK부터 시작합니다.</span>
+        </div>
+      ` : '';
+
+      // FINAL VERDICT 값 표시
+      const verdictDisplay = autoChecks.checks.finalVerdict.count === 1
+        ? `✅ ${autoChecks.checks.finalVerdict.value}`
+        : autoChecks.checks.finalVerdict.count === 0
+          ? '❌ 없음'
+          : `❌ ${autoChecks.checks.finalVerdict.count}개 중복`;
+
+      const html = `
+        <div class="auto-check-result">
+          ${structureWarning}
+          
+          <div class="check-section-title">① PART 구조 검사 (PART 0~4)</div>
+          <ul class="check-list">
+            <li class="check-item">
+              <span class="check-icon ${autoChecks.partsOk ? 'ok' : 'error'}">${autoChecks.partsOk ? '🟢' : '🔴'}</span>
+              <span>PART 0~4: ${autoChecks.partCount}/5 ${autoChecks.partsOk ? 'OK' : '누락'}</span>
+            </li>
+            <li class="check-item">
+              <span class="check-icon ${autoChecks.checks.part0IsMandatory ? 'ok' : 'warning'}">${autoChecks.checks.part0IsMandatory ? '🟢' : '⚠️'}</span>
+              <span>PART 0 Mandatory Injection Block: ${autoChecks.checks.part0IsMandatory ? 'OK' : '미확인'}</span>
+            </li>
+          </ul>
+
+          <div class="check-section-title">② 6대 심사축 (PART 1)</div>
+          <ul class="check-list">
+            <li class="check-item">
+              <span class="check-icon ${autoChecks.axesOk ? 'ok' : 'error'}">${autoChecks.axesOk ? '🟢' : '🔴'}</span>
+              <span>심사축: ${autoChecks.axesCount}/6 ${autoChecks.axesOk ? 'OK (4개 이상)' : '부족 (최소 4개 필요)'}</span>
+            </li>
+            <li class="check-item" style="padding-left: 32px; font-size: 13px; color: #64748b;">
+              <span>${autoChecks.checks.sixAxes.jjoIntegrity ? '✅' : '❌'} JJO 무결성 &nbsp;
+              ${autoChecks.checks.sixAxes.noEmployee ? '✅' : '❌'} No-Employee &nbsp;
+              ${autoChecks.checks.sixAxes.prebuilt ? '✅' : '❌'} Pre-built &nbsp;
+              ${autoChecks.checks.sixAxes.risk ? '✅' : '❌'} 리스크 &nbsp;
+              ${autoChecks.checks.sixAxes.operatorFit ? '✅' : '❌'} 운영자 적합성 &nbsp;
+              ${autoChecks.checks.sixAxes.stressTest ? '✅' : '❌'} 스트레스 테스트</span>
+            </li>
+          </ul>
+
+          <div class="check-section-title">③ FINAL VERDICT</div>
+          <ul class="check-list">
+            <li class="check-item">
+              <span class="check-icon ${autoChecks.verdictOk ? 'ok' : 'error'}">${autoChecks.verdictOk ? '🟢' : '🔴'}</span>
+              <span>FINAL VERDICT: ${verdictDisplay}</span>
+            </li>
+          </ul>
+
+          <div class="check-section-title">④ 영향 추적 블록</div>
+          <ul class="check-list">
+            <li class="check-item">
+              <span class="check-icon ${autoChecks.impactCount >= 3 ? 'ok' : 'warning'}">${autoChecks.impactCount >= 3 ? '🟢' : '⚠️'}</span>
+              <span>영향 추적: ${autoChecks.impactCount}/5 항목 감지</span>
+            </li>
+            <li class="check-item" style="padding-left: 32px; font-size: 13px; color: #64748b;">
+              <span>${autoChecks.checks.impactTracking.step2Reflect ? '✅' : '❌'} STEP 2 반영 &nbsp;
+              ${autoChecks.checks.impactTracking.slotA ? '✅' : '❌'} Slot A &nbsp;
+              ${autoChecks.checks.impactTracking.slotB ? '✅' : '❌'} Slot B &nbsp;
+              ${autoChecks.checks.impactTracking.changeLog ? '✅' : '❌'} 제거/축소/강화 &nbsp;
+              ${autoChecks.checks.impactTracking.responsibilityTag ? '✅' : '❌'} 책임 경계 태그</span>
+            </li>
+          </ul>
+
+          <div class="check-section-title">⑤ Sealing 영역 (PART 4)</div>
+          <ul class="check-list">
+            <li class="check-item">
+              <span class="check-icon ${autoChecks.sealingCount >= 4 ? 'ok' : 'warning'}">${autoChecks.sealingCount >= 4 ? '🟢' : '⚠️'}</span>
+              <span>Sealing: ${autoChecks.sealingCount}/6 영역 감지</span>
+            </li>
+            <li class="check-item" style="padding-left: 32px; font-size: 13px; color: #64748b;">
+              <span>${autoChecks.checks.sealing.v1Frozen ? '✅' : '❌'} v1.0 동결 &nbsp;
+              ${autoChecks.checks.sealing.v1xExperiment ? '✅' : '❌'} v1.x 실험 &nbsp;
+              ${autoChecks.checks.sealing.v2Only ? '✅' : '❌'} v2.0 변경 &nbsp;
+              ${autoChecks.checks.sealing.immutable ? '✅' : '❌'} 변경 불가 &nbsp;
+              ${autoChecks.checks.sealing.conditional ? '✅' : '❌'} 조건부 변경 &nbsp;
+              ${autoChecks.checks.sealing.approvalRequired ? '✅' : '❌'} 승인 필수</span>
+            </li>
+          </ul>
+
+          <div class="separator"></div>
+
+          <div class="check-section-title" style="margin-top: 8px;">참고 신호 (키워드 감지)</div>
+          <ul class="check-list">
+            <li class="check-item">
+              <span class="check-icon ${hints.branch > 0 ? 'ok' : 'warning'}">${hints.branch > 0 ? '🟢' : '⚠️'}</span>
+              <span>분기 표현: ${hints.branch}개</span>
+            </li>
+            <li class="check-item">
+              <span class="check-icon ${hints.prohibition > 0 ? 'ok' : 'warning'}">${hints.prohibition > 0 ? '🟢' : '⚠️'}</span>
+              <span>금지 문장: ${hints.prohibition}개</span>
+            </li>
+            <li class="check-item">
+              <span class="check-icon ${hints.boundary > 0 ? 'ok' : 'warning'}">${hints.boundary > 0 ? '🟢' : '⚠️'}</span>
+              <span>인계/승인: ${hints.boundary}개</span>
+            </li>
+            <li class="check-item">
+              <span class="check-icon ${hints.sealing > 0 ? 'ok' : 'warning'}">${hints.sealing > 0 ? '🟢' : '⚠️'}</span>
+              <span>봉인/동결: ${hints.sealing}개</span>
+            </li>
+            <li class="check-item">
+              <span class="check-icon ${hints.risk > 0 ? 'ok' : 'warning'}">${hints.risk > 0 ? '🟢' : '⚠️'}</span>
+              <span>리스크/최악: ${hints.risk}개</span>
+            </li>
+          </ul>
+
+          <div class="separator"></div>
+
+          <div class="manual-check">
+            <div class="check-section-title">운영자 판단 영역 (합성 품질 감시)</div>
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" id="inf_axes_conflict" onchange="calculateInfinityScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">심사축 간 결론 충돌 존재</span>
+                  <span class="checkbox-hint">6대 심사축 결론이 서로 모순</span>
+                </div>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="inf_verdict_mismatch" onchange="calculateInfinityScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">FINAL VERDICT와 심사축 결론 불일치</span>
+                  <span class="checkbox-hint">판정 결과가 심사 내용과 안 맞음</span>
+                </div>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="inf_slot_missing" onchange="calculateInfinityScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">Slot A/B 영향 범위 누락 또는 과장</span>
+                  <span class="checkbox-hint">영향 추적이 불완전하거나 부풀림</span>
+                </div>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="inf_change_no_basis" onchange="calculateInfinityScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">제거/축소 내역의 근거 불명확</span>
+                  <span class="checkbox-hint">왜 제거/축소했는지 이유 없음</span>
+                </div>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="inf_sealing_vague" onchange="calculateInfinityScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">Sealing 영역 분류 기준 모호</span>
+                  <span class="checkbox-hint">동결/실험/변경 기준이 불명확</span>
+                </div>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="inf_responsibility_missing" onchange="calculateInfinityScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">합성 책임 경계 태그 누락</span>
+                  <span class="checkbox-hint">책임 소재 구분 없음</span>
+                </div>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="inf_step2_mismatch" onchange="calculateInfinityScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">STEP 2 반영 항목과 실제 반영 불일치</span>
+                  <span class="checkbox-hint">반영했다고 했는데 실제로 안 됨</span>
+                </div>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="inf_operator_weak" onchange="calculateInfinityScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">운영자 관점 적합성 검토 부실</span>
+                  <span class="checkbox-hint">운영자가 실제로 쓸 수 있는지 미검증</span>
+                </div>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="inf_stress_shallow" onchange="calculateInfinityScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">최악 시나리오 깊이 부족</span>
+                  <span class="checkbox-hint">스트레스 테스트가 피상적</span>
+                </div>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="inf_no_employee_fail" onchange="calculateInfinityScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">No-Employee Operation 위반 구간 존재</span>
+                  <span class="checkbox-hint">직원 필요 구간이 설계에 포함</span>
+                </div>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="inf_risk_no_response" onchange="calculateInfinityScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">리스크가 명시되었으나 대응 없음</span>
+                  <span class="checkbox-hint">위험 감지만 하고 해결책 없음</span>
+                </div>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="inf_prebuilt_broken" onchange="calculateInfinityScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">Pre-built 반복판매 구조 훼손</span>
+                  <span class="checkbox-hint">커스텀 과다로 반복판매 불가</span>
+                </div>
+              </label>
+            </div>
+
+            <div class="score-display" id="infinityScoreDisplay">
+              <div>
+                <div class="score-label">이탈 감지 점수</div>
+                <div class="score-value" id="infinityScoreValue">0 / 12</div>
+              </div>
+              <div class="score-verdict rework" id="infinityVerdict">대기</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('infinityResult').innerHTML = html;
+      
+      // 초기 판정 계산
+      calculateInfinityScore();
+    }
+
+    function calculateInfinityScore() {
+      const ids = [
+        'inf_axes_conflict', 'inf_verdict_mismatch', 'inf_slot_missing', 'inf_change_no_basis',
+        'inf_sealing_vague', 'inf_responsibility_missing', 'inf_step2_mismatch', 'inf_operator_weak',
+        'inf_stress_shallow', 'inf_no_employee_fail', 'inf_risk_no_response', 'inf_prebuilt_broken'
+      ];
+      
+      const checked = ids.filter(id => document.getElementById(id)?.checked).length;
+      
+      document.getElementById('infinityScoreValue').textContent = `${checked} / 12`;
+      
+      const verdictEl = document.getElementById('infinityVerdict');
+      let verdict = '';
+      
+      // 구조 검사 실패 시 PASS 차단
+      const structurePass = currentInfinityResult?.autoChecks?.structurePass ?? false;
+      
+      if(!structurePass) {
+        // 구조 실패 → 최소 REWORK
+        verdict = checked >= 3 ? 'DROP' : 'REWORK';
+        verdictEl.className = verdict === 'DROP' ? 'score-verdict drop' : 'score-verdict rework';
+      } else {
+        // 구조 통과 → 수동 체크 기준
+        if(checked === 0) {
+          verdict = 'PASS';
+          verdictEl.className = 'score-verdict pass';
+        } else if(checked <= 2) {
+          verdict = 'REWORK';
+          verdictEl.className = 'score-verdict rework';
+        } else {
+          verdict = 'DROP';
+          verdictEl.className = 'score-verdict drop';
+        }
+      }
+      
+      verdictEl.textContent = verdict;
+      
+      if(currentInfinityResult) {
+        currentInfinityResult.manualScore = checked;
+        currentInfinityResult.verdict = verdict;
+      }
+      
+      document.getElementById('sidebarInfinity').textContent = verdict;
+      document.getElementById('sidebarInfinity').className = `status-value ${verdict.toLowerCase()}`;
+      
+      saveToLocalStorage();
+    }
+
+    function inspectPreview() {
+      const output = document.getElementById('previewOutput').value.trim();
+      if(!output) {
+        showToast('❌ Preview 결과물을 입력하세요');
+        return;
+      }
+
+      const resultDiv = document.getElementById('previewResult');
+      resultDiv.classList.remove('hidden');
+      
+      const autoChecks = performPreviewChecks(output);
+      displayPreviewInspection(autoChecks);
+      
+      currentPreviewResult = {
+        autoChecks,
+        manualScore: 0,
+        verdict: 'PENDING'
+      };
+      
+      saveToLocalStorage();
+    }
+
+    function performPreviewChecks(text) {
+      const checks = {
+        sections: {
+          global: /Global\s*Status/i.test(text) || /global/i.test(text),
+          oneThings: /One\s*Thing/i.test(text) || /one_thing/i.test(text),
+          signals: /Signal/i.test(text) || /signals/i.test(text),
+          logs: /History/i.test(text) || /logs/i.test(text),
+          reasoning: /Reason/i.test(text) || /reasoning/i.test(text)
+        },
+        fields: {
+          status: text.includes('status'),
+          headline: text.includes('headline'),
+          oneThingField: text.includes('one_thing'),
+          signalsField: text.includes('signals'),
+          reasoningField: text.includes('reasoning')
+        },
+        codes: {
+          ok: text.includes('OK'),
+          warning: text.includes('Warning'),
+          action: text.includes('Action'),
+          invalid: text.includes('Error') || text.includes('Fail')
+        }
+      };
+      
+      const sectionCount = Object.values(checks.sections).filter(Boolean).length;
+      const fieldCount = Object.values(checks.fields).filter(Boolean).length;
+      
+      return {
+        checks,
+        sectionCount,
+        fieldCount,
+        sectionsOk: sectionCount >= 5,
+        fieldsOk: fieldCount >= 5,
+        codesOk: !checks.codes.invalid,
+        structurePass: sectionCount >= 5 && fieldCount >= 5 && !checks.codes.invalid
+      };
+    }
+
+    function displayPreviewInspection(autoChecks) {
+      const structureWarning = !autoChecks.structurePass ? `
+        <div style="padding: 16px; background: #fef2f2; border-left: 4px solid #dc2626; border-radius: 8px; margin-bottom: 16px;">
+          <strong style="color: #dc2626;">⚠️ 구조 무결성 실패</strong><br>
+          <span style="font-size: 13px; color: #991b1b;">섹션/필드/상태코드 구조가 완전하지 않아 PASS 불가능합니다. 무조건 REWORK입니다.</span>
+        </div>
+      ` : '';
+      
+      const html = `
+        <div class="auto-check-result">
+          ${structureWarning}
+          
+          <div class="check-section-title">자동 형식 검사 결과</div>
+          <ul class="check-list">
+            <li class="check-item">
+              <span class="check-icon ${autoChecks.sectionsOk ? 'ok' : 'error'}">${autoChecks.sectionsOk ? '🟢' : '🔴'}</span>
+              <span>5개 섹션: ${autoChecks.sectionCount}/5 ${autoChecks.sectionsOk ? 'OK' : '누락'}</span>
+            </li>
+            <li class="check-item">
+              <span class="check-icon ${autoChecks.fieldsOk ? 'ok' : 'error'}">${autoChecks.fieldsOk ? '🟢' : '🔴'}</span>
+              <span>필드명 일치: ${autoChecks.fieldCount}/5 ${autoChecks.fieldsOk ? 'OK' : '불일치'}</span>
+            </li>
+            <li class="check-item">
+              <span class="check-icon ${autoChecks.codesOk ? 'ok' : 'error'}">${autoChecks.codesOk ? '🟢' : '🔴'}</span>
+              <span>상태 코드: ${autoChecks.codesOk ? 'OK (OK/Warning/Action만)' : 'Error/Fail 사용 금지'}</span>
+            </li>
+          </ul>
+
+          <div class="separator"></div>
+
+          <div class="manual-check">
+            <div class="check-section-title">운영자 판단 영역</div>
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" id="prev_section_missing" onchange="calculatePreviewScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">필수 섹션 누락</span>
+                  <span class="checkbox-hint">5개 섹션 중 일부 없음</span>
+                </div>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="prev_field_mismatch" onchange="calculatePreviewScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">필드명 불일치</span>
+                  <span class="checkbox-hint">표준 필드명 이탈</span>
+                </div>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="prev_invalid_codes" onchange="calculatePreviewScore()" />
+                <div class="checkbox-content">
+                  <span class="checkbox-label">금지 상태 코드 사용</span>
+                  <span class="checkbox-hint">Error/Fail 등 사용</span>
+                </div>
+              </label>
+            </div>
+
+            <div class="score-display" id="previewScoreDisplay">
+              <div>
+                <div class="score-label">이탈 감지 점수</div>
+                <div class="score-value" id="previewScoreValue">0 / 3</div>
+              </div>
+              <div class="score-verdict rework" id="previewVerdict">대기</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('previewResult').innerHTML = html;
+      
+      // 초기 판정 계산
+      calculatePreviewScore();
+    }
+
+    function calculatePreviewScore() {
+      const ids = ['prev_section_missing', 'prev_field_mismatch', 'prev_invalid_codes'];
+      const checked = ids.filter(id => document.getElementById(id)?.checked).length;
+      
+      document.getElementById('previewScoreValue').textContent = `${checked} / 3`;
+      
+      const verdictEl = document.getElementById('previewVerdict');
+      let verdict = '';
+      
+      // 구조 검사 실패 시 PASS 차단
+      const structurePass = currentPreviewResult?.autoChecks?.structurePass ?? false;
+      
+      if(!structurePass) {
+        // 구조 실패 → 무조건 REWORK
+        verdict = 'REWORK';
+        verdictEl.className = 'score-verdict rework';
+      } else {
+        // 구조 통과 → 수동 체크 기준
+        if(checked === 0) {
+          verdict = 'PASS';
+          verdictEl.className = 'score-verdict pass';
+        } else {
+          verdict = 'REWORK';
+          verdictEl.className = 'score-verdict rework';
+        }
+      }
+      
+      verdictEl.textContent = verdict;
+      
+      if(currentPreviewResult) {
+        currentPreviewResult.manualScore = checked;
+        currentPreviewResult.verdict = verdict;
+      }
+      
+      document.getElementById('sidebarPreview').textContent = verdict;
+      document.getElementById('sidebarPreview').className = `status-value ${verdict.toLowerCase()}`;
+      
+      saveToLocalStorage();
+    }
+
+    function addToLog() {
+      if(!currentInfinityResult && !currentPreviewResult) {
+        showToast('❌ 먼저 검수를 실행하세요');
+        return;
+      }
+
+      const workId = document.getElementById('workId').value || '-';
+      const designType = document.getElementById('designType').value || '-';
+      const infinity = currentInfinityResult ? currentInfinityResult.verdict : '-';
+      const preview = currentPreviewResult ? currentPreviewResult.verdict : '-';
+      const memo = [
+        currentInfinityResult ? `Inf: ${currentInfinityResult.manualScore}/12` : '',
+        currentPreviewResult ? `Prev: ${currentPreviewResult.manualScore}/3` : ''
+      ].filter(Boolean).join(' | ') || '-';
+      
+      const log = {
+        date: isoToday(),
+        workId,
+        designType,
+        infinity,
+        preview,
+        memo,
+        fullData: {
+          infinityResult: currentInfinityResult,
+          previewResult: currentPreviewResult,
+          infinityDesign: document.getElementById('infinityDesign').value,
+          previewOutput: document.getElementById('previewOutput').value
+        }
+      };
+      
+      inspectionLogs.push(log);
+      saveToLocalStorage();
+      renderLogs();
+      autoBackupJSON(log);
+      
+      showToast('📌 기록 추가됨 (자동 저장 완료)');
+    }
+
+    function autoBackupJSON(log) {
+      const filename = `launchrail_log_${log.date}_${log.workId.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+      const blob = new Blob([JSON.stringify(log, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function exportJSON() {
+      const data = {
+        currentWork: {
+          workId: document.getElementById('workId').value,
+          designType: document.getElementById('designType').value,
+          repeatCount: document.getElementById('repeatCount').value,
+          customLevel: document.getElementById('customLevel').value,
+          infinityDesign: document.getElementById('infinityDesign').value,
+          previewOutput: document.getElementById('previewOutput').value,
+          infinityResult: currentInfinityResult,
+          previewResult: currentPreviewResult
+        },
+        logs: inspectionLogs,
+        exportedAt: new Date().toISOString()
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `launchrail_전체백업_${isoToday()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast('📤 전체 백업 저장 완료');
+    }
+
+    function importJSON() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            
+            if(data.currentWork && data.logs) {
+              const work = data.currentWork;
+              document.getElementById('workId').value = work.workId || '';
+              document.getElementById('designType').value = work.designType || '';
+              document.getElementById('repeatCount').value = work.repeatCount || '';
+              document.getElementById('customLevel').value = work.customLevel || '';
+              document.getElementById('infinityDesign').value = work.infinityDesign || '';
+              document.getElementById('previewOutput').value = work.previewOutput || '';
+              
+              if(work.infinityResult) {
+                currentInfinityResult = work.infinityResult;
+                // Re-render if needed
+              }
+              
+              if(work.previewResult) {
+                currentPreviewResult = work.previewResult;
+              }
+              
+              inspectionLogs = data.logs || [];
+              renderLogs();
+              saveToLocalStorage();
+              showToast('📥 전체 백업 불러오기 완료');
+            } else if(data.fullData) {
+              document.getElementById('workId').value = data.workId || '';
+              document.getElementById('designType').value = data.designType || '';
+              document.getElementById('infinityDesign').value = data.fullData.infinityDesign || '';
+              document.getElementById('previewOutput').value = data.fullData.previewOutput || '';
+              
+              currentInfinityResult = data.fullData.infinityResult;
+              currentPreviewResult = data.fullData.previewResult;
+              
+              showToast('📥 개별 로그 불러오기 완료');
+            }
+            
+            updateSidebar();
+          } catch(error) {
+            showToast('❌ 파일 읽기 실패');
+            console.error(error);
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+
+    // Init
+    window.addEventListener('load', () => {
+      document.getElementById('todayDisplay').textContent = isoToday();
+      loadFromLocalStorage();
+      
+      if(!document.getElementById('workId').value) {
+        document.getElementById('workId').value = `LR-${isoToday()}-01`;
+        updateSidebar();
+      }
+    });
+  </script>
+
+</body>
+</html>
