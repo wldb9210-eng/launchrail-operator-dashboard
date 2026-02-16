@@ -775,15 +775,15 @@
       // 키워드 힌트
       const hints = getKeywordHints(design);
       
-      // 결과 표시
-      displayInfinityInspection(autoChecks, hints);
-      
       currentInfinityResult = {
         autoChecks,
         hints,
         manualScore: 0,
         verdict: 'PENDING'
       };
+      
+      // 결과 표시
+      displayInfinityInspection(autoChecks, hints);
       
       saveToLocalStorage();
     }
@@ -1100,13 +1100,14 @@
       resultDiv.classList.remove('hidden');
       
       const autoChecks = performPreviewChecks(output);
-      displayPreviewInspection(autoChecks);
       
       currentPreviewResult = {
         autoChecks,
         manualScore: 0,
         verdict: 'PENDING'
       };
+      
+      displayPreviewInspection(autoChecks);
       
       saveToLocalStorage();
     }
